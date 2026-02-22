@@ -1,0 +1,20 @@
+# Sui CLI binaries
+sui
+sui-bridge
+sui-bridge-cli
+sui-debug
+sui-faucet
+sui-node
+sui-test-validator
+sui-tool
+sui-testnet-v1.66.1-ubuntu-x86_64.tgz
+
+# Build artifacts
+/build
+Move.lock
+
+# Sui temporary publication file
+Pub.devnet.toml
+
+# Move analyzer binary
+move-analyzer

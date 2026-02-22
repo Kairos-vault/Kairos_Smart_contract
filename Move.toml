@@ -7,3 +7,6 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 
 [addresses]
 kairos = "0x0"
+
+[environments]
+devnet = "082d5a13"
