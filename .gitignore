@@ -18,3 +18,7 @@ Pub.devnet.toml
 
 # Move analyzer binary
 move-analyzer
+
+/generated/prisma
+node_modules/
+.env

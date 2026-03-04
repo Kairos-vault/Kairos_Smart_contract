@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Capsule {
+  id              String   @id // Sui Object ID
+  owner           String   // Sui Address
+  title           String
+  description     String
+  category        Int
+  blobId          String
+  status          Int      // 0=DRAFT, 1=ACTIVE, 2=UNLOCKED
+  lastPingTsMs    BigInt
+  isActivated     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  beneficiaries   Beneficiary[]
+}
+
+model Beneficiary {
+  id          String   @id @default(uuid())
+  capsuleId   String
+  capsule     Capsule  @relation(fields: [capsuleId], references: [id])
+  address     String?  // Optional Sui Address
+  zkIdHash    String?  // Hashed zkLogin ID
+  role        Int      // 0=HEIR, 1=PROXY_GUARDIAN
+  hasApproved Boolean  @default(false)
+}
