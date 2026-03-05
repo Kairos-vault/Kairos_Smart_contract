@@ -10,7 +10,8 @@ sui-tool
 sui-testnet-v1.66.1-ubuntu-x86_64.tgz
 
 # Build artifacts
-/build
+build/
+dist/
 Move.lock
 
 # Sui temporary publication file
@@ -19,6 +20,28 @@ Pub.devnet.toml
 # Move analyzer binary
 move-analyzer
 
-/generated/prisma
+# Node / JS
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Prisma
+/generated/prisma
+
+# Environment and secrets
 .env
+.env.*
+!.env.example
+
+# Temporary and backup files
+*.bak
+*.tmp
+*.swp
+*~
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
