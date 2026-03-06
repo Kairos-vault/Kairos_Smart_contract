@@ -13,6 +13,8 @@
     # pkgs.nodePackages.nodemon
     # pkgs.pnpm
     
+
+
   ];
 
   # Sets environment variables in the workspace
