@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 
 const SUI_RPC_URL = process.env.SUI_RPC_URL || getJsonRpcFullnodeUrl('devnet');
 const suiClient = new SuiJsonRpcClient({ url: SUI_RPC_URL });
-const PACKAGE_ID = process.env.PACKAGE_ID || '0x8ef483e991274ae8702a598c213c429acb175f5efa26b9ed52ba86c1e67b6d63';
+const PACKAGE_ID = process.env.PACKAGE_ID || '0xb82f436cd2c2578eaf2f0ef72687baf86907fba0df05ed2e06c123b2c27adf44';
 
 /**
  * Basic Indexer to synchronize Sui Objects with the Database.
