@@ -1,9 +1,8 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
-import { PrismaClient } from '@prisma/client';
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
+import { supabase } from './supabase';
 
-const prisma = new PrismaClient();
-const SUI_RPC_URL = process.env.SUI_RPC_URL || getFullnodeUrl('devnet');
-const suiClient = new SuiClient({ url: SUI_RPC_URL });
+const SUI_RPC_URL = process.env.SUI_RPC_URL || getJsonRpcFullnodeUrl('devnet');
+const suiClient = new SuiJsonRpcClient({ url: SUI_RPC_URL });
 const PACKAGE_ID = process.env.PACKAGE_ID || '0x8ef483e991274ae8702a598c213c429acb175f5efa26b9ed52ba86c1e67b6d63';
 
 /**
@@ -12,7 +11,6 @@ const PACKAGE_ID = process.env.PACKAGE_ID || '0x8ef483e991274ae8702a598c213c429a
 export async function syncObjects(address: string) {
   try {
     // 1. Fetch all objects of type 'Capsule' owned by the user (or shared)
-    // For now, we fetch by owner address if they are shared or owned.
     const objects = await suiClient.getOwnedObjects({
       owner: address,
       filter: {
@@ -27,27 +25,20 @@ export async function syncObjects(address: string) {
       const content = obj.data?.content;
       if (content && 'fields' in content) {
         const fields = content.fields as any;
-        await prisma.capsule.upsert({
-          where: { id: obj.data!.objectId },
-          update: {
-            title: fields.title,
-            description: fields.description,
-            category: parseInt(fields.category),
-            status: parseInt(fields.status),
-            lastPingTsMs: BigInt(fields.last_ping_ts_ms),
-            blobId: fields.blob_id,
-          },
-          create: {
-            id: obj.data!.objectId,
-            owner: address,
-            title: fields.title,
-            description: fields.description,
-            category: parseInt(fields.category),
-            status: parseInt(fields.status),
-            lastPingTsMs: BigInt(fields.last_ping_ts_ms),
-            blobId: fields.blob_id,
-          },
-        });
+        
+        const { error } = await supabase.from('Capsule').upsert({
+          id: obj.data!.objectId,
+          owner: address,
+          title: fields.title,
+          description: fields.description,
+          category: parseInt(fields.category),
+          status: parseInt(fields.status),
+          lastPingTsMs: fields.last_ping_ts_ms,
+          blobId: fields.blob_id,
+          updatedAt: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+        if (error) console.error('Supabase Upsert Error:', error);
       }
     }
     return true;

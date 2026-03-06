@@ -1,17 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
 import { syncObjects } from './indexer';
+import { supabase } from './supabase';
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
-const SUI_RPC_URL = process.env.SUI_RPC_URL || getFullnodeUrl('devnet');
-const suiClient = new SuiClient({ url: SUI_RPC_URL });
+const SUI_RPC_URL = process.env.SUI_RPC_URL || getJsonRpcFullnodeUrl('devnet');
+const suiClient = new SuiJsonRpcClient({ url: SUI_RPC_URL });
 
 app.use(cors());
 app.use(express.json());
@@ -32,12 +31,14 @@ app.get('/api/capsules/owner/:address', async (req, res) => {
     // Attempt to sync from Sui before returning local data
     await syncObjects(address);
 
-    const capsules = await prisma.capsule.findMany({
-      where: { owner: address },
-      include: { beneficiaries: true },
-    });
+    const { data: capsules, error } = await supabase
+      .from('Capsule')
+      .select('*, beneficiaries:Beneficiary(*)')
+      .eq('owner', address);
+
+    if (error) throw error;
     
-    // Serialize BigInt for JSON
+    // Serialize BigInt for JSON (if any exist in Supabase responses)
     const serialized = JSON.parse(JSON.stringify(capsules, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     ));
@@ -54,15 +55,14 @@ app.get('/api/capsules/owner/:address', async (req, res) => {
 app.get('/api/capsules/beneficiary/:identifier', async (req, res) => {
   const { identifier } = req.params;
   try {
-    const capsules = await prisma.capsule.findMany({
-      where: {
-        OR: [
-          { beneficiaries: { some: { address: identifier } } },
-          { beneficiaries: { some: { zkIdHash: identifier } } },
-        ],
-      },
-      include: { beneficiaries: true },
-    });
+    // Note: This complex join might need adjusted based on table relations
+    const { data: capsules, error } = await supabase
+      .from('Capsule')
+      .select('*, beneficiaries:Beneficiary!inner(*)')
+      .or(`address.eq.${identifier},zkIdHash.eq.${identifier}`, { foreignTable: 'beneficiaries' });
+
+    if (error) throw error;
+
     const serialized = JSON.parse(JSON.stringify(capsules, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     ));
